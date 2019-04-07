@@ -1,0 +1,47 @@
+## Full command lines of the major analysis processes for transcriptomic and genomic data in the paper "Integrating Genomic and Transcriptomic Data to Reveal Genetic Mechanisms Underlying Piao Chicken Rumpless Trait"
+
+## For transcriptomic data
+1. Trim adaptors and reads by btrim
+btrim64 -S -q -s <summary file> -l 30 -a 20 -o <output file> -t <left sequence file>
+btrim64 -S -q -s <summary file> -l 30 -a 20 -o <output file> -t <right sequence file>
+perl paired_end_trim.pl <summary file from left reads> <summary file from right reads > <output file for left reads from the first step> <output file for right reads from the first step>
+
+2. Map reads to chicken reference genome using Tophat2
+tophat2 -p 6 -N 3 --read-gap-length 3 --read-edit-dist 3 -G <reference.gtf> -o <output file> <bowtie_index of reference.fa> <btrim.left.pe> <btrim.right.pe>
+
+3. Expression evaluation
+## by HTSeq union exon model
+python -m HTSeq.scripts.count  -f bam -s no -t exon -q <accepted_hits.bam from tophat2> <reference.gtf> ><output file> 
+## by HTSeq whole gene model
+htseq-count -f bam -s no -t gene -q <accepted_hits.bam> <reference.gtf> ><output file>
+## by Cufflinks
+cufflinks -p 6 -g <reference.gtf> -o <output file> <accepted_hits.bam>
+
+4. Differential expression analysis by Cuffdiff
+cuffdiff -p 6 -u -L <Piao label/Control label> -o <output file> <reference.gtf> <comma-separated accepted_hits.bam files of Piao chicken> <comma-separated accepted_hits.bam files of control chickens>
+
+## For genomic data
+1. Trim adaptors and reads by btrim
+btrim64 -S -q -s <summary file> -l 25 -a 20 -o <output file> -t <left sequence file>
+btrim64 -S -q -s <summary file> -l 25 -a 20 -o <output file> -t <right sequence file>
+perl paired_end_trim.pl <summary file from left reads> <summary file from right reads > <output file for left reads from the first step> <output file for right reads from the first step>
+
+2. Reads alignment and SNP-indel calling
+## Reads alignment based on the BWA-MEM algorithm
+bwa mem -t 12 -M -R "bam header" <reference.fa> <btrim.left.output> <btrim.right.output> | samtools view -bS -o <output file>
+
+## Sort bam files and mark duplicates
+picard-tools-1.56/SortSam.jar INPUT=<bam input file> OUTPUT=<sorted bam output file> SORT_ORDER=coordinate
+picard-tools-1.56/MarkDuplicates.jar INPUT=<input sorted bam file> OUTPUT=<output file> METRICS_FILE=<metrics output file> VALIDATION_STRINGENCY=LENIENT MAX_FILE_HANDLES_FOR_READ_ENDS_MAP=50
+
+## bam file preprocessing by GATK
+java -Xmx16g -jar GenomeAnalysisTK-2.6-4-g3e5ff60/GenomeAnalysisTK.jar -R <reference.fa> -T RealignerTargetCreator -o <output file 1> -I <sort bam input file> -known <vcf file of known variants>
+java -Xmx16g -jar GenomeAnalysisTK-2.6-4-g3e5ff60/GenomeAnalysisTK.jar -R <reference.fa> -T IndelRealigner -targetIntervals <output file 1> -o <output file 2> -I <sort bam input file> -known <vcf file of known variants>
+java -Xmx16g -jar GenomeAnalysisTK-2.6-4-g3e5ff60/GenomeAnalysisTK.jar -R <reference.fa> -T BaseRecalibrator -o <output file 3> -I <output file 2> -knownSites <vcf file of known variants>
+java -Xmx16g -jar GenomeAnalysisTK-2.6-4-g3e5ff60/GenomeAnalysisTK.jar -R <reference.fa> -T PrintReads -I <output file 2> -BQSR <output file 3> -o <output file 4>
+
+## SNP calling by GATK
+java -Xmx32g -jar GenomeAnalysisTK-2.6-4-g3e5ff60/GenomeAnalysisTK.jar -R <reference.fa> -T UnifiedGenotyper --dbsnp <vcf file of known variants> -I <bam list of Piao chicken> -I <bam list of control chickens> -o <vcf output file> --output_mode EMIT_VARIANTS_ONLY -glm SNP -nt 2 -nct 4 -L <chromosome>
+
+## indel calling by GATK
+java -Xmx32g -jar GenomeAnalysisTK-2.6-4-g3e5ff60/GenomeAnalysisTK.jar -R <reference.fa> -T UnifiedGenotyper --dbsnp <vcf file of known variants> -I <bam list of Piao chicken> -I <bam list of control chickens> -o <vcf output file> --output_mode EMIT_VARIANTS_ONLY -glm INDEL -nt 2 -nct 4 -L <chromosome>
