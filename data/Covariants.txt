@@ -1,0 +1,22 @@
+sample	age	breed	lane	condition
+PiaoT1	1	D7	Piao	L7	rumpless
+PiaoT2	2	D7	Piao	L7	rumpless
+PiaoT3	3	D7	Piao	L7	rumpless
+PiaoT4	4	D8	Piao	L7	rumpless
+PiaoT5	5	D8	Piao	L7	rumpless
+PiaoT6	6	D8	Piao	L7	rumpless
+PiaoT7	7	D9	Piao	L7	rumpless
+PiaoT8	8	D9	Piao	L7	rumpless
+PiaoT9	9	D9	Piao	L7	rumpless
+CtrlT7	10	D7	Henan	L4	normal
+CtrlT8	11	D7	Henan	L3	normal
+CtrlT1	12	D7	Wuding	L7	normal
+CtrlT2	13	D7	Wuding	L5	normal
+CtrlT9	14	D8	Henan	L7	normal
+CtrlT10	15	D8	Henan	L7	normal
+CtrlT3	16	D8	Wuding	L7	normal
+CtrlT4	17	D8	Wuding	L7	normal
+CtrlT11	18	D9	Henan	L7	normal
+CtrlT12	19	D9	Henan	L7	normal
+CtrlT5	20	D9	Wuding	L7	normal
+CtrlT6	21	D9	Wuding	L7	normal
